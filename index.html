@@ -41,40 +41,32 @@
 
     // Switch between different cameras
     async function switchCamera(deviceId) {
-      try {
-        const videoConstraints = { video: { deviceId: { exact: deviceId } } };
-        const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
-        videoElement.srcObject = stream;
-        videoElement.play();
-      } catch (error) {
-        console.error("Could not switch camera:", error);
+      const videoConstraints = { video: { deviceId: { exact: deviceId } } };
+      const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+      videoElement.srcObject = stream;
+      videoElement.play();
       }
-    }
 
     // Request access to the webcam and handle multiple camera inputs
     async function startCamera() {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-        // Add camera options to the dropdown
-        videoDevices.forEach((device, index) => {
-          const option = document.createElement('option');
-          option.value = device.deviceId;
-          option.text = device.label || `Camera ${index + 1}`;
-          cameraSelect.appendChild(option);
+      // Add camera options to the dropdown
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.text = device.label || `Camera ${index + 1}`;
+        cameraSelect.appendChild(option);
         });
 
-        // Set an event listener for camera selection
-        cameraSelect.addEventListener('change', () => switchCamera(cameraSelect.value));
+      // Set an event listener for camera selection
+      cameraSelect.addEventListener('change', () => switchCamera(cameraSelect.value));
 
-        // Automatically select the first available camera
-        if (videoDevices.length > 0) {
-          await switchCamera(videoDevices[0].deviceId);
-          cameraSelect.value = videoDevices[0].deviceId;
-        }
-      } catch (error) {
-        console.error("Error accessing the camera:", error);
+      // Automatically select the first available camera
+      if (videoDevices.length > 0) {
+        await switchCamera(videoDevices[0].deviceId);
+        cameraSelect.value = videoDevices[0].deviceId;
       }
     }
 
