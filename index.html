@@ -29,10 +29,10 @@
 
   <!-- Hidden canvas for QR scanning -->
   <canvas id="canvas" hidden></canvas>
-
+  
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.js"></script>
   <!-- Import the QR scanning library -->
-  <script type="module">
-    import jsQR from './js/jsqr-es6.js';
+  <script >
 
     const videoElement = document.getElementById("video");
     const canvasElement = document.getElementById("canvas");  // Fixed ID to match HTML
