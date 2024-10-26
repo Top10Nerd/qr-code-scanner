@@ -25,32 +25,35 @@
   <select id="cameraSelect"></select>
 
   <!-- Video element to show the camera feed -->
-  <video id="video" autoplay></video>
+  <video id="video" autoplay playsinline></video>
 
   <!-- Hidden canvas for QR scanning -->
   <canvas id="canvas" hidden></canvas>
-  
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.3.1/dist/jsQR.js"></script>
+
   <!-- Import the QR scanning library -->
-  <script >
+  <script type="module">
+    import jsQR from './js/jsqr-es6.js';
 
     const videoElement = document.getElementById("video");
-    const canvasElement = document.getElementById("canvas");  // Fixed ID to match HTML
+    const canvasElement = document.getElementById("canvas");
     const canvasContext = canvasElement.getContext("2d");
     const cameraSelect = document.getElementById("cameraSelect");
 
-    // Function to switch between cameras
+    // Switch between different cameras
     async function switchCamera(deviceId) {
-      const videoConstraints = { video: { deviceId: { exact: deviceId } }};
-      const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
-      videoElement.srcObject = stream;
-      videoElement.play();
+      try {
+        const videoConstraints = { video: { deviceId: { exact: deviceId } } };
+        const stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
+        videoElement.srcObject = stream;
+        videoElement.play();
+      } catch (error) {
+        console.error("Could not switch camera:", error);
+      }
     }
 
-    // Start the camera and populate the camera dropdown
+    // Request access to the webcam and handle multiple camera inputs
     async function startCamera() {
       try {
-        // Get available video input devices (cameras)
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
@@ -62,12 +65,13 @@
           cameraSelect.appendChild(option);
         });
 
-        // Set an event listener for camera changes
-        cameraSelect.onchange = () => switchCamera(cameraSelect.value);
+        // Set an event listener for camera selection
+        cameraSelect.addEventListener('change', () => switchCamera(cameraSelect.value));
 
-        // Automatically select the first camera
+        // Automatically select the first available camera
         if (videoDevices.length > 0) {
-          await switchCamera(cameraSelect.value);
+          await switchCamera(videoDevices[0].deviceId);
+          cameraSelect.value = videoDevices[0].deviceId;
         }
       } catch (error) {
         console.error("Error accessing the camera:", error);
@@ -77,37 +81,24 @@
     // Function to scan for QR codes
     function scanQRCode() {
       if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
-        // Set canvas size to match the video feed
         canvasElement.width = videoElement.videoWidth;
         canvasElement.height = videoElement.videoHeight;
 
-        // Draw the current frame from the video onto the canvas
         canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-
-        // Get image data from the canvas
         const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
         
-        // Use jsQR to scan the QR code
         const code = jsQR(imageData.data, canvasElement.width, canvasElement.height);
-
         if (code) {
           console.log('QR Code detected:', code.data);
-
-          // Automatically open the QR code URL
           window.open(code.data, '_blank');
         }
       }
-
-      // Continue scanning at the next animation frame
       requestAnimationFrame(scanQRCode);
     }
 
-    // Start the camera and QR scanning process
+    // Initialize the camera and start scanning
     startCamera().then(() => {
-      // Begin scanning once the camera feed is ready
-      videoElement.addEventListener('play', () => {
-        scanQRCode();
-      });
+      videoElement.addEventListener('play', scanQRCode);
     });
   </script>
 </body>
